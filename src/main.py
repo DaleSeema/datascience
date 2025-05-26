@@ -1,13 +1,14 @@
 import cv2
 from video_capture import VideoCapture
-# Updated import to include BodyPoseExtractor
-from feature_extraction import HandFeatureExtractor, BodyPoseExtractor 
+# Updated import to include FaceMeshExtractor
+from feature_extraction import HandFeatureExtractor, BodyPoseExtractor, FaceMeshExtractor 
 
 def run_live_feed():
     video_source_index = 0
-    video_stream = None # Initialize to None for cleanup check
-    hand_extractor = None # Initialize to None
-    body_extractor = None # Initialize to None
+    video_stream = None
+    hand_extractor = None
+    body_extractor = None
+    face_extractor = None # Initialize to None
 
     try:
         video_stream = VideoCapture(video_source_index)
@@ -28,7 +29,7 @@ def run_live_feed():
         return
 
     try:
-        body_extractor = BodyPoseExtractor() # Initialize BodyPoseExtractor
+        body_extractor = BodyPoseExtractor()
         print("BodyPoseExtractor initialized successfully.")
     except Exception as e:
         print(f"An unexpected error occurred during BodyPoseExtractor initialization: {e}")
@@ -36,7 +37,17 @@ def run_live_feed():
         if hand_extractor: hand_extractor.close()
         return
 
-    print("Displaying live feed with hand and pose landmark detection. Press 'q' to quit.")
+    try:
+        face_extractor = FaceMeshExtractor() # Initialize FaceMeshExtractor
+        print("FaceMeshExtractor initialized successfully.")
+    except Exception as e:
+        print(f"An unexpected error occurred during FaceMeshExtractor initialization: {e}")
+        if video_stream: video_stream.release()
+        if hand_extractor: hand_extractor.close()
+        if body_extractor: body_extractor.close()
+        return
+
+    print("Displaying live feed with hand, pose, and face landmark detection. Press 'q' to quit.")
     while True:
         success, frame = video_stream.get_frame()
 
@@ -53,18 +64,22 @@ def run_live_feed():
         # Hand landmark processing
         hand_landmarks_data, hand_results = hand_extractor.extract_features(image_rgb)
         if hand_landmarks_data:
-            # print(f"Detected {len(hand_landmarks_data)} hand(s).")
-            pass
-        hand_extractor.draw_landmarks_on_image(frame, hand_results) # Draw on BGR frame
+            pass # Optional print/debug
+        hand_extractor.draw_landmarks_on_image(frame, hand_results)
 
         # Body pose landmark processing
         pose_landmarks_data, pose_results = body_extractor.extract_features(image_rgb)
         if pose_landmarks_data:
-            # print(f"Detected pose with {len(pose_landmarks_data)} landmarks.")
-            pass
-        body_extractor.draw_landmarks_on_image(frame, pose_results) # Draw on BGR frame
+            pass # Optional print/debug
+        body_extractor.draw_landmarks_on_image(frame, pose_results)
 
-        cv2.imshow("Live Feed - Hand & Pose Landmarks - Press 'q' to quit", frame) # Updated window title
+        # Face mesh landmark processing
+        face_landmarks_data, face_results = face_extractor.extract_features(image_rgb)
+        if face_landmarks_data:
+            pass # Optional print/debug
+        face_extractor.draw_landmarks_on_image(frame, face_results) # Draw on BGR frame
+
+        cv2.imshow("Live Feed - All Landmarks - Press 'q' to quit", frame) # Updated window title
 
         key_press = cv2.waitKey(1) & 0xFF
         if key_press == ord('q'):
@@ -74,7 +89,8 @@ def run_live_feed():
     print("Releasing resources...")
     if video_stream: video_stream.release()
     if hand_extractor: hand_extractor.close()
-    if body_extractor: body_extractor.close() # Close BodyPoseExtractor
+    if body_extractor: body_extractor.close()
+    if face_extractor: face_extractor.close() # Close FaceMeshExtractor
     cv2.destroyAllWindows()
     print("Video feed stopped and resources released.")
 
