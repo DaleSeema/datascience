@@ -1,0 +1,10 @@
+# Core Computer Vision and Numerical Processing
+opencv-python
+mediapipe
+numpy
+
+# Hugging Face Transformers and PyTorch (for LLMs and other models)
+transformers
+torch
+# Or, if TensorFlow is preferred for Hugging Face models:
+# tensorflow
