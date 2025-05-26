@@ -1,9 +1,14 @@
 import cv2
 from video_capture import VideoCapture
-from feature_extraction import HandFeatureExtractor # Added import
+# Updated import to include BodyPoseExtractor
+from feature_extraction import HandFeatureExtractor, BodyPoseExtractor 
 
 def run_live_feed():
     video_source_index = 0
+    video_stream = None # Initialize to None for cleanup check
+    hand_extractor = None # Initialize to None
+    body_extractor = None # Initialize to None
+
     try:
         video_stream = VideoCapture(video_source_index)
         print(f"Successfully opened video source: {video_source_index}")
@@ -15,14 +20,23 @@ def run_live_feed():
         return
 
     try:
-        hand_extractor = HandFeatureExtractor() # Initialize HandFeatureExtractor
+        hand_extractor = HandFeatureExtractor()
         print("HandFeatureExtractor initialized successfully.")
     except Exception as e:
         print(f"An unexpected error occurred during HandFeatureExtractor initialization: {e}")
-        video_stream.release() # Release video stream if hand extractor fails
+        if video_stream: video_stream.release()
         return
 
-    print("Displaying live feed with hand landmark detection. Press 'q' to quit.")
+    try:
+        body_extractor = BodyPoseExtractor() # Initialize BodyPoseExtractor
+        print("BodyPoseExtractor initialized successfully.")
+    except Exception as e:
+        print(f"An unexpected error occurred during BodyPoseExtractor initialization: {e}")
+        if video_stream: video_stream.release()
+        if hand_extractor: hand_extractor.close()
+        return
+
+    print("Displaying live feed with hand and pose landmark detection. Press 'q' to quit.")
     while True:
         success, frame = video_stream.get_frame()
 
@@ -34,36 +48,33 @@ def run_live_feed():
             print("Retrieved a None frame despite success flag. Exiting.")
             break
 
-        # Convert the BGR image to RGB for MediaPipe.
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
-        # Process the image and extract hand landmarks.
-        # `landmarks_data` will be our list of lists of dicts if hands are found.
-        # `results` is the raw MediaPipe results object, useful for drawing.
-        landmarks_data, results = hand_extractor.extract_features(image_rgb)
+        # Hand landmark processing
+        hand_landmarks_data, hand_results = hand_extractor.extract_features(image_rgb)
+        if hand_landmarks_data:
+            # print(f"Detected {len(hand_landmarks_data)} hand(s).")
+            pass
+        hand_extractor.draw_landmarks_on_image(frame, hand_results) # Draw on BGR frame
 
-        if landmarks_data:
-            # For debugging, print the number of hands detected or some landmark info
-            # print(f"Detected {len(landmarks_data)} hand(s).")
-            # For example, to print x,y of the wrist of the first detected hand:
-            # if len(landmarks_data[0]) > 0:
-            #     print(f"Hand 1, Wrist (x,y): {landmarks_data[0][0]['x']:.2f}, {landmarks_data[0][0]['y']:.2f}")
-            pass # Keep console clean for now, can uncomment above for debugging
+        # Body pose landmark processing
+        pose_landmarks_data, pose_results = body_extractor.extract_features(image_rgb)
+        if pose_landmarks_data:
+            # print(f"Detected pose with {len(pose_landmarks_data)} landmarks.")
+            pass
+        body_extractor.draw_landmarks_on_image(frame, pose_results) # Draw on BGR frame
 
-        # Draw the hand annotations on the original BGR frame.
-        hand_extractor.draw_landmarks_on_image(frame, results)
-
-        cv2.imshow("Live Video Feed - Hand Landmarks - Press 'q' to quit", frame)
+        cv2.imshow("Live Feed - Hand & Pose Landmarks - Press 'q' to quit", frame) # Updated window title
 
         key_press = cv2.waitKey(1) & 0xFF
         if key_press == ord('q'):
             print("'q' key pressed. Exiting live feed.")
             break
 
-    # Cleanup
     print("Releasing resources...")
-    video_stream.release()
-    hand_extractor.close() # Close MediaPipe Hands
+    if video_stream: video_stream.release()
+    if hand_extractor: hand_extractor.close()
+    if body_extractor: body_extractor.close() # Close BodyPoseExtractor
     cv2.destroyAllWindows()
     print("Video feed stopped and resources released.")
 
