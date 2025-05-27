@@ -8,3 +8,6 @@ transformers
 torch
 # Or, if TensorFlow is preferred for Hugging Face models:
 # tensorflow
+
+# Text-to-Speech
+pyttsx3
