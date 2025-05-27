@@ -23,10 +23,14 @@ def run_live_feed():
         
         # Initialize sign recognition components
         # The num_expected_features must match the output of aggregate_frame_features
-        # From previous tests: (21*3 hand0) + (21*3 hand1) + (33*4 pose) + (478*3 face) = 63 + 63 + 132 + 1434 = 1692
-        # This assumes full data. If a subset of face landmarks is used, this number will change.
-        # For now, using the full conceptual number.
-        AGGREGATED_FEATURE_LENGTH = (21*3) + (21*3) + (33*4) + (478*3) 
+        # The num_expected_features must match the output of aggregate_frame_features in sign_recognition.py
+        # Current calculation based on selected landmarks:
+        # Hand 0 (21 landmarks * 3 coords) = 63
+        # Hand 1 (21 landmarks * 3 coords) = 63
+        # Pose (8 selected landmarks * 4 coords) = 32
+        # Face (50 selected landmarks * 3 coords) = 150
+        # Total = 63 + 63 + 32 + 150 = 408
+        AGGREGATED_FEATURE_LENGTH = 408
         sequence_buffer = FeatureSequenceBuffer(sequence_length=30, buffer_overlap=15) # e.g., 30 frames, 15 overlap
         sign_model = SignRecognitionModel(num_expected_features=AGGREGATED_FEATURE_LENGTH,
                                           model_path="dummy_model_directory/model.pth") # Optionally test dummy loading
