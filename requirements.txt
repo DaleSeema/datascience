@@ -11,3 +11,6 @@ torch
 
 # Text-to-Speech
 pyttsx3
+
+# Data Processing
+pandas
