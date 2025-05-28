@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+env/
+.env
+*.env
+
+# IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating system specific files
+.DS_Store
+Thumbs.db
+
+# Data files (if large or sensitive, add specific patterns)
+# data/large_dataset.csv
+# data/sensitive_info.txt
